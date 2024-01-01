@@ -98,3 +98,15 @@ Thumbs.db
 # Firebase
 firebase-admin-sdk.json
 *.pem
+
+# Test files
+test_*.py
+quick_test.py
+check_db.py
+
+# Batch files
+*.bat
+
+# Duplicate README files
+Readme.md
+README_SETUP.md
