@@ -1,0 +1,24 @@
+{
+    "name": "growny-ai",
+    "version": "1.0.0",
+    "description": "AI-powered personal assistant with React frontend and Python backend",
+    "scripts": {
+        "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+        "frontend": "cd frontend && npm run dev",
+        "backend": "cd backend && python main.py",
+        "install:all": "npm install && cd frontend && npm install",
+        "dev": "npm run start"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    },
+    "keywords": [
+        "ai",
+        "todo",
+        "gemini",
+        "react",
+        "fastapi"
+    ],
+    "author": "",
+    "license": "ISC"
+}
