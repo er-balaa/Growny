@@ -342,18 +342,28 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
+  /* Hide desktop sidebar completely */
   .sidebar {
-    display: none;
+    display: none !important;
+    visibility: hidden;
+    width: 0 !important;
   }
 
+  /* Main content takes full width */
   .main-content {
-    margin-left: 0;
-    width: 100%;
+    margin-left: 0 !important;
+    width: 100% !important;
     padding-bottom: 140px; /* Space for mobile nav and input */
   }
 
+  /* App container adjusts to full width */
+  .app-container {
+    flex-direction: column;
+  }
+
+  /* Show mobile elements */
   .mobile-header {
-    display: block;
+    display: block !important;
     height: 60px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--bg-tertiary);
@@ -409,7 +419,9 @@
     color: var(--accent);
   }
 
+  /* Bottom navigation */
   .mobile-nav {
+    display: block !important;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -461,7 +473,9 @@
     background: var(--bg-tertiary);
   }
 
+  /* Mobile input bar */
   .mobile-input-bar {
+    display: block !important;
     position: fixed;
     bottom: 74px;
     left: 0;
@@ -522,7 +536,7 @@
     cursor: not-allowed;
   }
 
-  /* Chat welcome adjustments */
+  /* Content adjustments */
   .chat-welcome {
     padding: 80px 16px 20px;
     max-width: 100%;
