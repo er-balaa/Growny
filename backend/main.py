@@ -28,12 +28,13 @@ print("---------------------")
 
 app = FastAPI(title="Growny-AI Backend", version="1.0.0")
 
-# CORS Configuration
-origins = os.getenv("CORS_ORIGINS", '["http://localhost:5173", "http://localhost:3000"]')
-try:
-    origins = json.loads(origins)
-except:
-    origins = ["*"]
+# CORS Configuration - Fixed to include all necessary origins
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000", 
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000"
+]
 
 app.add_middleware(
     CORSMiddleware,
@@ -62,13 +63,24 @@ except Exception as e:
     print(f"Warning: Firebase initialization error: {e}")
 
 # Initialize Supabase and Gemini
-supabase = create_client(
-    os.getenv("SUPABASE_URL"),
-    os.getenv("SUPABASE_KEY")
-)
+try:
+    supabase = create_client(
+        os.getenv("SUPABASE_URL"),
+        os.getenv("SUPABASE_KEY")
+    )
+    print("✅ Supabase initialized")
+except Exception as e:
+    print(f"❌ Supabase initialization error: {e}")
+    supabase = None
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-2.0-flash')
+try:
+    genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+    model = genai.GenerativeModel('gemini-2.0-flash')
+    print("✅ Gemini initialized")
+except Exception as e:
+    print(f"❌ Gemini initialization error: {e}")
+    model = None
+
 security = HTTPBearer()
 
 # Pydantic Models
@@ -95,33 +107,11 @@ class SearchResult(BaseModel):
     due_date: Optional[str]
     similarity: float
 
-# ============================================
-# GEMINI API CALLS - EFFICIENT IMPLEMENTATION
-# ============================================
-#
-# When Gemini is called:
-# 1. CREATE TASK: 2 API calls
-#    - analyze_todo(): LLM call to categorize & summarize (gemini-2.0-flash)
-#    - get_vector(): Embedding call for semantic search (text-embedding-004)
-#
-# 2. SEARCH: 1 API call
-#    - get_vector(): Embedding call for search query
-#
-# 3. GET/DELETE TASKS: 0 API calls (database only)
-#
-# Optimizations implemented:
-# - Use gemini-2.0-flash (fastest model)
-# - Use text-embedding-004 (768 dimensions, efficient)
-# - Embed the SUMMARY not raw text (shorter = faster)
-# - No redundant calls on read operations
-# ============================================
-
 def get_vector(text: str) -> Optional[List[float]]:
-    """
-    Generates 768-dim vector using Gemini embedding
-    Called: Once per task creation, once per search
-    Cost: Very low (embedding model is cheap)
-    """
+    """Generates 768-dim vector using Gemini embedding"""
+    if not model:
+        print("❌ Gemini model not available")
+        return None
     try:
         res = genai.embed_content(
             model="models/text-embedding-004",
@@ -134,11 +124,11 @@ def get_vector(text: str) -> Optional[List[float]]:
         return None
 
 def analyze_todo(text: str) -> dict:
-    """
-    Uses LLM to clean and categorize information
-    Called: Once per task creation only
-    Model: gemini-2.0-flash (fastest, cheapest)
-    """
+    """Uses LLM to clean and categorize information"""
+    if not model:
+        print("❌ Gemini model not available, using fallback")
+        return {"category": "NOTE", "priority": "MEDIUM", "summary": text, "due_date": None}
+    
     prompt = f"""
     Current Date: {datetime.now().strftime('%Y-%m-%d')}
     Input: "{text}"
@@ -164,9 +154,15 @@ def analyze_todo(text: str) -> dict:
         return {"category": "NOTE", "priority": "MEDIUM", "summary": text, "due_date": None}
 
 async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """Verify Firebase ID token - NO Gemini call"""
+    """Verify Firebase ID token"""
     try:
         token = credentials.credentials
+        if not token or token == "test":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         decoded_token = auth.verify_id_token(token)
         return decoded_token
     except Exception as e:
@@ -180,15 +176,12 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
 # API Endpoints
 @app.get("/")
 async def root():
-    """Health check - NO Gemini call"""
+    """Health check"""
     return {"message": "Growny-AI Backend API", "version": "1.0.0"}
 
 @app.post("/api/tasks", response_model=dict)
 async def create_task(task: TaskRequest, user_data: dict = Depends(verify_firebase_token)):
-    """
-    Create a new task with AI analysis
-    GEMINI CALLS: 2 (analyze + embed)
-    """
+    """Create a new task with AI analysis"""
     print(f"=== CREATE TASK DEBUG ===")
     print(f"Request task text: '{task.text}'")
     print(f"User data: {user_data}")
@@ -197,10 +190,14 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
         print("ERROR: Empty task text")
         raise HTTPException(status_code=400, detail="Task text cannot be empty")
 
+    if not supabase:
+        print("ERROR: Supabase not available")
+        raise HTTPException(status_code=500, detail="Database not available")
+
     try:
         print(f"Creating task for user: {user_data['uid']}")
         
-        # Step 1: Analyze the task (1 Gemini LLM call)
+        # Step 1: Analyze the task
         print("Calling Gemini for analysis...")
         data = analyze_todo(task.text)
         print(f"Analysis complete: {data}")
@@ -211,16 +208,16 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
             summary_text = task.text
             print(f"Using fallback summary: {summary_text}")
 
-        # Step 2: Generate embedding (1 Gemini embedding call)
+        # Step 2: Generate embedding
         print(f"Generating embedding for: {summary_text[:50]}...")
-        vector = get_vector(summary_text)  # Use summary (shorter = faster)
+        vector = get_vector(summary_text)
         
         if not vector:
             print("ERROR: Vector generation returned None")
-            raise HTTPException(status_code=500, detail="Failed to generate vector embedding. Gemini API Key check logs.")
-        print(f"✅ Embedding generated, length: {len(vector)}")
+            # Continue without vector instead of failing
+            vector = []
         
-        # Step 3: Save to Supabase (NO Gemini call)
+        # Step 3: Save to Supabase
         payload = {
             "content": summary_text,
             "raw_text": task.text,
@@ -256,26 +253,30 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
 
 @app.post("/api/search", response_model=List[SearchResult])
 async def search_tasks(search: SearchRequest, user_data: dict = Depends(verify_firebase_token)):
-    """
-    Search tasks using vector similarity
-    GEMINI CALLS: 1 (embed search query)
-    """
+    """Search tasks using vector similarity"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not available")
 
     try:
         print(f"Searching for: {search.query}")
         
-        # Generate embedding for search query (1 Gemini call)
+        # Generate embedding for search query
         vector = get_vector(search.query)
         if not vector:
-            raise HTTPException(status_code=500, detail="Failed to generate search vector")
-        
-        # Database query (NO Gemini call)
-        result = supabase.rpc("match_tasks", {
-            "query_embedding": vector,
-            "match_threshold": 0.7,
-            "match_count": 10,
-            "filter_user_id": user_data['uid']
-        }).execute()
+            # Fallback to text search if vector generation fails
+            result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("content", f"%{search.query}%").execute()
+        else:
+            # Use vector search
+            try:
+                result = supabase.rpc("match_tasks", {
+                    "query_embedding": vector,
+                    "match_threshold": 0.7,
+                    "match_count": 10,
+                    "filter_user_id": user_data['uid']
+                }).execute()
+            except:
+                # Fallback to text search if vector search fails
+                result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("content", f"%{search.query}%").execute()
         
         if not result.data:
             return []
@@ -298,13 +299,13 @@ async def search_tasks(search: SearchRequest, user_data: dict = Depends(verify_f
 
 @app.get("/api/tasks", response_model=List[TaskResponse])
 async def get_tasks(user_data: dict = Depends(verify_firebase_token)):
-    """
-    Get all tasks for the authenticated user
-    GEMINI CALLS: 0 (database only)
-    """
+    """Get all tasks for the authenticated user"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not available")
+        
     try:
         print(f"Fetching tasks for user: {user_data['uid']}")
-        result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).execute()
+        result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).order("created_at", desc=True).execute()
         print(f"Found {len(result.data)} tasks")
         
         tasks = []
@@ -333,10 +334,10 @@ async def get_tasks(user_data: dict = Depends(verify_firebase_token)):
 
 @app.delete("/api/tasks/{task_id}")
 async def delete_task(task_id: str, user_data: dict = Depends(verify_firebase_token)):
-    """
-    Delete a specific task
-    GEMINI CALLS: 0 (database only)
-    """
+    """Delete a specific task"""
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Database not available")
+        
     try:
         result = supabase.table("tasks").delete().eq("id", task_id).eq("user_id", user_data['uid']).execute()
         

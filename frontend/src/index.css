@@ -349,6 +349,348 @@
   .main-content {
     margin-left: 0;
     width: 100%;
+    padding-bottom: 140px; /* Space for mobile nav and input */
+  }
+
+  .mobile-header {
+    display: block;
+    height: 60px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--bg-tertiary);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  .mobile-header-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .mobile-logo-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    min-width: 0; /* Allow truncation */
+  }
+
+  .mobile-username {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 120px;
+  }
+
+  .mobile-logo {
+    font-size: 18px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .mobile-logo span {
+    color: var(--accent);
+  }
+
+  .mobile-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--bg-tertiary);
+    z-index: 100;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-nav-items {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 8px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .mobile-nav-item {
+    padding: 8px 6px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+    max-width: 80px;
+  }
+
+  .mobile-nav-item svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .mobile-nav-item:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .mobile-input-bar {
+    position: fixed;
+    bottom: 74px;
+    left: 0;
+    right: 0;
+    background: var(--bg-primary);
+    padding: 12px 16px;
+    padding-bottom: calc(12px + max(4px, env(safe-area-inset-bottom)));
+    z-index: 99;
+    border-top: 1px solid var(--bg-tertiary);
+  }
+
+  .mobile-input-row {
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--bg-tertiary);
+    border-radius: 20px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .mobile-input-row input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 16px;
+    outline: none;
+    min-width: 0;
+  }
+
+  .mobile-input-row input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .mobile-submit {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .mobile-submit:hover {
+    background: var(--accent-dark);
+  }
+
+  .mobile-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Chat welcome adjustments */
+  .chat-welcome {
+    padding: 80px 16px 20px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .chat-welcome h1 {
+    font-size: 24px;
+    margin-bottom: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .chat-input-container {
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .chat-input-wrapper {
+    max-width: 100%;
+  }
+
+  .chat-input {
+    width: 100%;
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* List view adjustments */
+  .list-view {
+    padding: 80px 16px 20px;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .list-header {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .list-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .list-count {
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Task list adjustments */
+  .task-list {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .task-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .task-content {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .task-meta {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  /* Profile dropdown adjustments */
+  .profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 12px;
+    min-width: 200px;
+    max-width: 280px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+  }
+
+  .dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--bg-tertiary);
+  }
+
+  .dropdown-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dropdown-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dropdown-email {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dropdown-signout {
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .dropdown-signout:hover {
+    background: var(--bg-tertiary);
+  }
+
+  /* Loading states */
+  .tasks-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .tasks-loading-container span {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  /* Ensure no horizontal scroll */
+  * {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Safe area support for notched screens */
+  .safe-area-top {
+    padding-top: max(60px, env(safe-area-inset-top));
+  }
+
+  .safe-area-bottom {
+    padding-bottom: max(74px, env(safe-area-inset-bottom));
   }
 }
 
@@ -493,7 +835,7 @@
 
   .task-item {
     background: var(--bg-secondary);
-    border: 1px solid var(--bg-tertiary);
+    border: 1.5px solid var(--bg-tertiary);
     border-radius: 12px;
     padding: 16px;
     display: flex;

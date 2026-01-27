@@ -61,14 +61,21 @@ function App() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('authToken');
+    try {
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('authToken');
 
-    // Eager loading: Start fetching tasks immediately if we have credentials
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
-      loadTasks(true); // Eager loading enabled
-    } else {
+      if (storedUser && storedToken) {
+        const user = JSON.parse(storedUser);
+        setUser(user);
+        loadTasks(true);
+      } else {
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('Error loading stored user data:', error);
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
       setLoading(false);
     }
   }, []);
@@ -102,12 +109,21 @@ function App() {
   };
 
   const handleAuthStateChange = (userData) => {
-    if (userData) {
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      localStorage.setItem('authToken', userData.token);
-      loadTasks();
-    } else {
+    try {
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('authToken', userData.token);
+        loadTasks();
+      } else {
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        setTasks([]);
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error in handleAuthStateChange:', error);
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('authToken');
@@ -145,8 +161,6 @@ function App() {
       }
     } catch (error) {
       console.error('Error:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
       alert(`Error: ${error.response?.data?.detail || error.message}`);
     } finally {
       setIsSubmitting(false);

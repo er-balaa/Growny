@@ -41,16 +41,8 @@ api.interceptors.response.use(
 export const taskAPI = {
   // Create a new task
   createTask: async (text) => {
-    try {
-      console.log('Creating task with text:', text);
-      const response = await api.post('/api/tasks', { text });
-      console.log('Task creation response:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('API Error in createTask:', error);
-      console.error('Error response:', error.response?.data);
-      throw error;
-    }
+    const response = await api.post('/api/tasks', { text });
+    return response.data;
   },
 
   // Get all tasks for the user

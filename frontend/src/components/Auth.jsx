@@ -19,6 +19,7 @@ const Auth = ({ user, onAuthStateChange }) => {
       });
     } catch (error) {
       console.error('Error signing in with Google:', error);
+      alert(`Sign in error: ${error.message}`);
     } finally {
       setLoading(false);
     }
