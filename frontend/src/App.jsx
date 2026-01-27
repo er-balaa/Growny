@@ -21,31 +21,31 @@ const IconSearch = () => (
 
 const IconImportant = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+    <circle cx="12" cy="12" r="10"></circle>
+    <circle cx="12" cy="12" r="3"></circle>
   </svg>
 );
 
 const IconBell = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
   </svg>
 );
 
 const IconNote = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+    <line x1="16" y1="13" x2="8" y2="13"></line>
+    <line x1="16" y1="17" x2="8" y2="17"></line>
+    <line x1="10" y1="9" x2="8" y2="9"></line>
   </svg>
 );
 
 const IconTask = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>
-  </svg>
-);
-
-const IconArrowUp = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline>
+    <path d="M9 11l3 3L22 4"></path>
+    <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
   </svg>
 );
 
@@ -343,6 +343,11 @@ function App() {
                     </div>
                   </div>
                   <button className="dropdown-signout" onClick={handleSignOut}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="7 17 12 12 17 7"></polyline>
+                      <line x1="12" y1="22" x2="12" y2="17"></line>
+                    </svg>
                     Sign Out
                   </button>
                 </div>
@@ -380,7 +385,7 @@ function App() {
                     className="chat-submit-btn"
                     disabled={!chatInput.trim() || isSubmitting}
                   >
-                    <IconArrowUp />
+                    Submit
                   </button>
                 </div>
               </form>
@@ -409,7 +414,7 @@ function App() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                     />
-                    <button type="submit" className="chat-submit-btn"><IconArrowUp /></button>
+                    <button type="submit" className="chat-submit-btn">Send</button>
                   </div>
                 </form>
               </div>
@@ -465,7 +470,7 @@ function App() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
               />
-              <button type="submit" className="mobile-submit"><IconArrowUp /></button>
+              <button type="submit" className="mobile-submit">Send</button>
             </div>
           </form>
         </div>
