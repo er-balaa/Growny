@@ -37,7 +37,7 @@
   ::-webkit-scrollbar {
     display: none;
   }
-  
+
   * {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -353,6 +353,7 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 1024px) {
+
   /* Hide desktop sidebar completely */
   .sidebar {
     display: none !important;
@@ -364,10 +365,12 @@
   .main-content {
     margin-left: 0 !important;
     width: 100% !important;
-    height: calc(100vh - 60px); /* Account for header */
+    height: calc(100vh - 60px);
+    /* Account for header */
     overflow-y: auto;
     overflow-x: hidden;
-    padding-bottom: 140px; /* Space for mobile nav and input */
+    padding-bottom: 140px;
+    /* Space for mobile nav and input */
     /* Hide scrollbar indicators */
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
@@ -412,19 +415,7 @@
   .mobile-user-info {
     display: flex;
     align-items: center;
-    gap: 10px;
     flex-shrink: 0;
-    min-width: 0; /* Allow truncation */
-  }
-
-  .mobile-username {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 120px;
   }
 
   .mobile-logo {
@@ -439,7 +430,8 @@
 
   .mobile-profile-wrapper {
     position: relative;
-    z-index: 1001; /* Higher than mobile header */
+    z-index: 1001;
+    /* Higher than mobile header */
   }
 
   .mobile-profile-btn {
@@ -555,8 +547,8 @@
   }
 
   .mobile-submit {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     background: var(--accent);
     border: none;
@@ -566,15 +558,18 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.15s ease;
   }
 
-  .mobile-submit:hover {
+  .mobile-submit:hover:not(:disabled) {
     background: var(--accent-dark);
+    transform: scale(1.05);
   }
 
   .mobile-submit:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
+    background: var(--bg-tertiary);
   }
 
   /* Content adjustments */
@@ -608,7 +603,8 @@
 
   .chat-input {
     width: 100%;
-    font-size: 16px; /* Prevent zoom on iOS */
+    font-size: 16px;
+    /* Prevent zoom on iOS */
   }
 
   /* List view adjustments */
@@ -682,7 +678,8 @@
     min-width: 280px;
     max-width: 320px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    z-index: 1002; /* Higher than mobile header and wrapper */
+    z-index: 1002;
+    /* Higher than mobile header and wrapper */
     overflow: hidden;
   }
 
@@ -1891,4 +1888,201 @@
     font-size: 18px;
     margin-bottom: 12px;
   }
+}
+
+/* ============================================
+   MINIMAL TASK LIST STYLES
+   Clean, professional design
+   ============================================ */
+
+.task-list-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.task-item-minimal {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-secondary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.task-item-minimal:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.task-item-minimal.overdue {
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, var(--bg-secondary) 100%);
+}
+
+.task-item-minimal.due-soon {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 100%);
+}
+
+/* Priority indicator line */
+.task-priority-line {
+  width: 3px;
+  min-height: 100%;
+  flex-shrink: 0;
+}
+
+.task-main {
+  flex: 1;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.task-content-minimal {
+  flex: 1;
+}
+
+.task-text-minimal {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.task-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.task-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.task-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.task-badge.category {
+  font-weight: 700;
+}
+
+.task-badge.date {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: transparent;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.task-badge.date.overdue {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.task-badge.date.due-soon {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.task-badge.match {
+  background: var(--accent-light);
+  color: var(--accent);
+  border-color: rgba(249, 115, 22, 0.2);
+}
+
+.task-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.task-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  opacity: 1;
+}
+
+/* Mobile adjustments for minimal task list */
+@media (max-width: 768px) {
+  .task-list-minimal {
+    gap: 8px;
+  }
+
+  .task-item-minimal {
+    border-radius: 10px;
+  }
+
+  .task-main {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .task-text-minimal {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .task-badges {
+    gap: 4px;
+  }
+
+  .task-badge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .task-delete-btn {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* Empty state refinement */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px dashed var(--bg-tertiary);
+}
+
+.empty-state p {
+  font-size: 14px;
+  margin: 0;
+  font-weight: 400;
 }

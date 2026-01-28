@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import List, Optional
 import os
@@ -28,12 +29,17 @@ print("---------------------")
 
 app = FastAPI(title="Growny-AI Backend", version="1.0.0")
 
+# Mount static files for frontend (mount before other routes)
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # CORS Configuration - Fixed to include all necessary origins
 origins = [
     "http://localhost:5173",
     "http://localhost:3000", 
     "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000"
+    "http://127.0.0.1:3000",
+    "*"  # Allow all origins for production deployment
 ]
 
 app.add_middleware(
@@ -56,7 +62,7 @@ try:
         # Check if app is already initialized to avoid "App already exists" error
         if not firebase_admin._apps:
             firebase_admin.initialize_app(cred)
-        print("✅ Firebase Admin initialized")
+        print("[OK] Firebase Admin initialized")
     else:
         print(f"Warning: Firebase admin SDK file not found at {firebase_creds_path}. Auth endpoints will be limited.")
 except Exception as e:
@@ -68,17 +74,17 @@ try:
         os.getenv("SUPABASE_URL"),
         os.getenv("SUPABASE_KEY")
     )
-    print("✅ Supabase initialized")
+    print("[OK] Supabase initialized")
 except Exception as e:
-    print(f"❌ Supabase initialization error: {e}")
+    print(f"[ERROR] Supabase initialization error: {e}")
     supabase = None
 
 try:
     genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
     model = genai.GenerativeModel('gemini-2.0-flash')
-    print("✅ Gemini initialized")
+    print("[OK] Gemini initialized")
 except Exception as e:
-    print(f"❌ Gemini initialization error: {e}")
+    print(f"[ERROR] Gemini initialization error: {e}")
     model = None
 
 security = HTTPBearer()
@@ -110,7 +116,7 @@ class SearchResult(BaseModel):
 def get_vector(text: str) -> Optional[List[float]]:
     """Generates 768-dim vector using Gemini embedding"""
     if not model:
-        print("❌ Gemini model not available")
+        print("[ERROR] Gemini model not available")
         return None
     try:
         res = genai.embed_content(
@@ -126,7 +132,7 @@ def get_vector(text: str) -> Optional[List[float]]:
 def analyze_todo(text: str) -> dict:
     """Uses LLM to clean and categorize information"""
     if not model:
-        print("❌ Gemini model not available, using fallback")
+        print("[ERROR] Gemini model not available, using fallback")
         return {"category": "NOTE", "priority": "MEDIUM", "summary": text, "due_date": None}
     
     prompt = f"""
@@ -157,16 +163,31 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
     """Verify Firebase ID token"""
     try:
         token = credentials.credentials
+        print(f"[AUTH] Received token (first 50 chars): {token[:50] if token else 'None'}...")
+        
         if not token or token == "test":
+            print("[AUTH] Token is empty or 'test'")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        
+        # Check if Firebase Admin is initialized
+        if not firebase_admin._apps:
+            print("[AUTH] ERROR: Firebase Admin SDK not initialized!")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Firebase Admin SDK not initialized",
+            )
+        
         decoded_token = auth.verify_id_token(token)
+        print(f"[AUTH] Token verified successfully for user: {decoded_token.get('uid', 'unknown')}")
         return decoded_token
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Auth Error: {type(e).__name__}: {e}")
+        print(f"[AUTH] Token verification failed: {type(e).__name__}: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
@@ -178,6 +199,16 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
 async def root():
     """Health check"""
     return {"message": "Growny-AI Backend API", "version": "1.0.0"}
+
+@app.get("/app")
+async def serve_frontend():
+    """Serve the frontend SPA"""
+    index_path = "static/index.html"
+    if os.path.exists(index_path):
+        with open(index_path, "r") as f:
+            content = f.read()
+        return content
+    return {"message": "Frontend not built yet"}
 
 @app.post("/api/tasks", response_model=dict)
 async def create_task(task: TaskRequest, user_data: dict = Depends(verify_firebase_token)):
@@ -235,7 +266,7 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
             print("ERROR: Supabase insert returned no data")
             raise HTTPException(status_code=500, detail="Failed to save task to Supabase")
         
-        print(f"✅ Task saved successfully: {result.data[0]['id']}")
+        print(f"[OK] Task saved successfully: {result.data[0]['id']}")
         return {
             "success": True,
             "message": "Task saved successfully",

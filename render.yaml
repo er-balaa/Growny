@@ -1,0 +1,23 @@
+services:
+  # Web Service that runs both frontend and backend
+  - type: web
+    name: growny-ai
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt && cd frontend && npm install && npm run build && mkdir -p ../backend/static && cp -r dist/* ../backend/static/
+    startCommand: cd backend && python main.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: NODE_VERSION
+        value: "18"
+      # Add your environment variables in Render Dashboard
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: FIREBASE_ADMIN_SDK_PATH
+        value: ./firebase-admin-sdk.json
+    healthCheckPath: /

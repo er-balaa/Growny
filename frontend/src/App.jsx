@@ -3,13 +3,20 @@ import Auth from './components/Auth';
 import Sidebar from './components/Sidebar';
 import TaskList from './components/TaskList';
 import { taskAPI } from './services/api';
-import { signOut } from 'firebase/auth';
-import { auth } from './firebase';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { auth, getCurrentToken } from './firebase';
 
 // --- Professional Icons (SVG) ---
 const IconPlus = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line>
+  </svg>
+);
+
+const IconArrowUp = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"></line>
+    <polyline points="5 12 12 5 19 12"></polyline>
   </svg>
 );
 
@@ -61,23 +68,51 @@ function App() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('user');
-      const storedToken = localStorage.getItem('authToken');
+    // Use Firebase's onAuthStateChanged for proper auth state management
+    // This ensures we always have fresh tokens and proper auth state
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (firebaseUser) {
+          console.log('[App] Firebase user detected:', firebaseUser.email);
 
-      if (storedUser && storedToken) {
-        const user = JSON.parse(storedUser);
-        setUser(user);
-        loadTasks(true);
-      } else {
+          // Get a fresh token
+          const token = await getCurrentToken(false);
+
+          if (token) {
+            const userData = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              displayName: firebaseUser.displayName,
+              photoURL: firebaseUser.photoURL,
+              token
+            };
+
+            setUser(userData);
+            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('authToken', token);
+
+            // Load tasks after auth is confirmed
+            loadTasks(true);
+          } else {
+            console.warn('[App] No token available for authenticated user');
+            setLoading(false);
+          }
+        } else {
+          console.log('[App] No Firebase user');
+          setUser(null);
+          localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          setTasks([]);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('[App] Error in auth state change:', error);
         setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading stored user data:', error);
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      setLoading(false);
-    }
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -96,34 +131,36 @@ function App() {
       if (eager) {
         setTasksLoading(true);
       }
-      
+
+      console.log('Loading tasks...');
       const tasksData = await taskAPI.getTasks();
+      console.log(`Loaded ${tasksData.length} tasks`);
       setTasks(tasksData);
     } catch (error) {
       console.error('Error loading tasks:', error);
       console.error('Error details:', error.response?.data || error.message);
+      // Don't clear existing tasks on error, just log it
     } finally {
+      // Always set loading to false when done
       setLoading(false);
       setTasksLoading(false);
     }
   };
 
   const handleAuthStateChange = (userData) => {
-    try {
-      if (userData) {
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
+    // This is called by the Auth component for immediate UI feedback
+    // Firebase's onAuthStateChanged will handle the full auth flow
+    if (userData) {
+      console.log('[App] Auth component reports sign-in, Firebase listener will handle data...');
+      // Just update UI immediately, Firebase listener will refresh token and load tasks
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      if (userData.token) {
         localStorage.setItem('authToken', userData.token);
-        loadTasks();
-      } else {
-        setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
-        setTasks([]);
-        setSearchResults([]);
       }
-    } catch (error) {
-      console.error('Error in handleAuthStateChange:', error);
+    } else {
+      // Sign out - clear everything
+      console.log('[App] User signed out');
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('authToken');
@@ -321,7 +358,6 @@ function App() {
           </div>
 
           <div className="mobile-user-info">
-            <span className="mobile-username">{user.displayName?.split(' ')[0]}</span>
             <div className="mobile-profile-wrapper">
               <button
                 className="mobile-profile-btn"
@@ -385,7 +421,7 @@ function App() {
                     className="chat-submit-btn"
                     disabled={!chatInput.trim() || isSubmitting}
                   >
-                    Submit
+                    <IconArrowUp />
                   </button>
                 </div>
               </form>
@@ -414,7 +450,7 @@ function App() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                     />
-                    <button type="submit" className="chat-submit-btn">Send</button>
+                    <button type="submit" className="chat-submit-btn"><IconArrowUp /></button>
                   </div>
                 </form>
               </div>
@@ -470,7 +506,9 @@ function App() {
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
               />
-              <button type="submit" className="mobile-submit">Send</button>
+              <button type="submit" className="mobile-submit" disabled={!chatInput.trim() || isSubmitting}>
+                <IconArrowUp />
+              </button>
             </div>
           </form>
         </div>
