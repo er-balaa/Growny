@@ -195,20 +195,21 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
         )
 
 # API Endpoints
-@app.get("/")
-async def root():
-    """Health check"""
+@app.get("/api/health")
+async def health_check():
+    """Health check endpoint"""
     return {"message": "Growny-AI Backend API", "version": "1.0.0"}
 
-@app.get("/app")
+@app.get("/")
 async def serve_frontend():
     """Serve the frontend SPA"""
+    from fastapi.responses import HTMLResponse
     index_path = "static/index.html"
     if os.path.exists(index_path):
-        with open(index_path, "r") as f:
+        with open(index_path, "r", encoding="utf-8") as f:
             content = f.read()
-        return content
-    return {"message": "Frontend not built yet"}
+        return HTMLResponse(content=content)
+    return {"message": "Frontend not built yet. Please run the build command."}
 
 @app.post("/api/tasks", response_model=dict)
 async def create_task(task: TaskRequest, user_data: dict = Depends(verify_firebase_token)):
@@ -380,6 +381,27 @@ async def delete_task(task_id: str, user_data: dict = Depends(verify_firebase_to
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting task: {str(e)}")
 
+# Catch-all route for SPA - must be LAST
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    """Catch-all route to serve frontend for SPA routing"""
+    from fastapi.responses import HTMLResponse, FileResponse
+    
+    # Check if it's a static file request
+    static_file_path = f"static/{full_path}"
+    if os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+    
+    # For all other routes, serve index.html (SPA routing)
+    index_path = "static/index.html"
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    
+    return {"message": "Frontend not built"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

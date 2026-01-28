@@ -20,4 +20,4 @@ services:
         sync: false
       - key: FIREBASE_ADMIN_SDK_PATH
         value: ./firebase-admin-sdk.json
-    healthCheckPath: /
+    healthCheckPath: /api/health
