@@ -335,6 +335,13 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* Ambient Background */}
+      <div className="animated-bg">
+        <div className="orb orb-1"></div>
+        <div className="orb orb-2"></div>
+        <div className="orb orb-3"></div>
+      </div>
+
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
