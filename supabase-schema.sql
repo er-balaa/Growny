@@ -63,11 +63,3 @@ CREATE POLICY "Users can view own tasks" ON tasks FOR SELECT USING (true);
 CREATE POLICY "Users can insert own tasks" ON tasks FOR INSERT WITH CHECK (true);
 CREATE POLICY "Users can update own tasks" ON tasks FOR UPDATE USING (true);
 CREATE POLICY "Users can delete own tasks" ON tasks FOR DELETE USING (true);
-
--- STEP 9: Verify the fix worked
-SELECT 
-  column_name, 
-  is_nullable
-FROM information_schema.columns
-WHERE table_name = 'tasks' AND column_name = 'embedding';
--- Should show: is_nullable = YES
