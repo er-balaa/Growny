@@ -118,15 +118,24 @@ def get_vector(text: str) -> Optional[List[float]]:
     if not model:
         print("[ERROR] Gemini model not available")
         return None
+    
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        print("[ERROR] GEMINI_API_KEY environment variable not set")
+        return None
+        
     try:
         res = genai.embed_content(
             model="models/text-embedding-004",
             content=text,
             task_type="retrieval_document"
         )
+        print(f"[OK] Vector generated successfully (dim: {len(res['embedding'])})")
         return res['embedding']
     except Exception as e:
-        print(f"Vector Error: {e}")
+        print(f"[ERROR] Vector generation failed: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def analyze_todo(text: str) -> dict:
@@ -245,9 +254,9 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
         vector = get_vector(summary_text)
         
         if not vector:
-            print("ERROR: Vector generation returned None")
-            # Continue without vector instead of failing
-            vector = []
+            print("WARNING: Vector generation failed, saving task without embedding")
+            # Use None (NULL) instead of empty array to avoid pgvector dimension error
+            vector = None
         
         # Step 3: Save to Supabase
         payload = {
@@ -285,33 +294,69 @@ async def create_task(task: TaskRequest, user_data: dict = Depends(verify_fireba
 
 @app.post("/api/search", response_model=List[SearchResult])
 async def search_tasks(search: SearchRequest, user_data: dict = Depends(verify_firebase_token)):
-    """Search tasks using vector similarity"""
+    """Search tasks using vector similarity + text search"""
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not available")
 
     try:
-        print(f"Searching for: {search.query}")
+        query = search.query.strip()
+        print(f"Searching for: {query}")
         
-        # Generate embedding for search query
-        vector = get_vector(search.query)
-        if not vector:
-            # Fallback to text search if vector generation fails
-            result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("content", f"%{search.query}%").execute()
-        else:
-            # Use vector search
+        all_results = {}
+        
+        # 1. Always do text search on both content and raw_text
+        try:
+            # Search in content
+            text_result1 = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("content", f"%{query}%").execute()
+            for item in (text_result1.data or []):
+                all_results[item['id']] = {**item, 'similarity': 0.8}
+            
+            # Search in raw_text (original user input)
+            text_result2 = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("raw_text", f"%{query}%").execute()
+            for item in (text_result2.data or []):
+                if item['id'] not in all_results:
+                    all_results[item['id']] = {**item, 'similarity': 0.8}
+            
+            # Search individual words for partial matches
+            words = [w for w in query.lower().split() if len(w) > 2]
+            for word in words[:3]:  # Limit to first 3 words
+                word_result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("raw_text", f"%{word}%").execute()
+                for item in (word_result.data or []):
+                    if item['id'] not in all_results:
+                        all_results[item['id']] = {**item, 'similarity': 0.5}
+                        
+        except Exception as te:
+            print(f"Text search error: {te}")
+        
+        # 2. Try vector search if possible (for semantic matching)
+        vector = get_vector(query)
+        if vector:
             try:
-                result = supabase.rpc("match_tasks", {
+                vector_result = supabase.rpc("match_tasks", {
                     "query_embedding": vector,
-                    "match_threshold": 0.7,
-                    "match_count": 10,
+                    "match_threshold": 0.3,  # Lower threshold for better recall
+                    "match_count": 20,
                     "filter_user_id": user_data['uid']
                 }).execute()
-            except:
-                # Fallback to text search if vector search fails
-                result = supabase.table("tasks").select("*").eq("user_id", user_data['uid']).ilike("content", f"%{search.query}%").execute()
+                
+                for item in (vector_result.data or []):
+                    if item['id'] not in all_results:
+                        all_results[item['id']] = item
+                    else:
+                        # Keep higher similarity
+                        if item.get('similarity', 0) > all_results[item['id']].get('similarity', 0):
+                            all_results[item['id']]['similarity'] = item['similarity']
+                            
+            except Exception as ve:
+                print(f"Vector search error: {ve}")
         
-        if not result.data:
+        if not all_results:
+            print("No results found")
             return []
+        
+        # Sort by similarity and return
+        sorted_results = sorted(all_results.values(), key=lambda x: x.get('similarity', 0), reverse=True)
+        print(f"Found {len(sorted_results)} results")
         
         return [
             SearchResult(
@@ -320,13 +365,15 @@ async def search_tasks(search: SearchRequest, user_data: dict = Depends(verify_f
                 category=item.get('category'),
                 priority=item.get('priority'),
                 due_date=item.get('due_date'),
-                similarity=item.get('similarity', 0.0)
+                similarity=float(item.get('similarity', 0.0))
             )
-            for item in result.data
+            for item in sorted_results[:20]
         ]
         
     except Exception as e:
         print(f"Search error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error searching tasks: {str(e)}")
 
 @app.get("/api/tasks", response_model=List[TaskResponse])

@@ -377,19 +377,20 @@ function App() {
               </button>
 
               {showProfileDropdown && (
-                <div className="profile-dropdown">
+                <div className="profile-dropdown mobile-dropdown">
                   <div className="dropdown-header">
                     <Avatar size="large" />
                     <div className="dropdown-info">
-                      <div className="dropdown-name">{user.displayName}</div>
-                      <div className="dropdown-email">{user.email}</div>
+                      <div className="dropdown-name">{user.displayName || 'User'}</div>
+                      <div className="dropdown-email">{user.email || 'No email'}</div>
                     </div>
                   </div>
+                  <div className="dropdown-divider"></div>
                   <button className="dropdown-signout" onClick={handleSignOut}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="7 17 12 12 17 7"></polyline>
-                      <line x1="12" y1="22" x2="12" y2="17"></line>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
                     </svg>
                     Sign Out
                   </button>
