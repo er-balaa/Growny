@@ -1,8 +1,23 @@
 import axios from 'axios';
 import { getCurrentToken, auth } from '../firebase';
 
-// Use empty string for production (same origin), localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:8000');
+// Determine API base URL:
+// - In production: use VITE_API_URL if set, otherwise use same-origin (empty string)
+// - In development: use VITE_API_URL if set, otherwise use localhost:8000
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+
+  // If VITE_API_URL is explicitly set (even to empty string), use it
+  if (envUrl !== undefined) {
+    return envUrl;
+  }
+
+  // Fallback: production uses same-origin, development uses localhost
+  return import.meta.env.PROD ? '' : 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+console.log('[API] Base URL:', API_BASE_URL || '(same-origin)');
 
 // Create axios instance with default config
 const api = axios.create({
