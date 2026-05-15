@@ -68,6 +68,11 @@ function App() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   useEffect(() => {
+    if (!auth) {
+      setLoading(false);
+      return;
+    }
+
     // Use Firebase's onAuthStateChanged for proper auth state management
     // This ensures we always have fresh tokens and proper auth state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -184,20 +189,52 @@ function App() {
     if (!chatInput.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    try {
-      if (activeView === 'search') {
+
+    if (activeView === 'search') {
+      try {
         const results = await taskAPI.searchTasks(chatInput);
         setSearchResults(results);
+      } catch (error) {
+        console.error('Search error:', error);
+        alert(`Error: ${error.response?.data?.detail || error.message}`);
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Optimistic add: insert a temporary placeholder immediately
+    const tempId = `temp-${Date.now()}`;
+    const tempTask = {
+      id: tempId,
+      content: chatInput,
+      category: 'TASK',
+      priority: 'MEDIUM',
+      due_date: null,
+      created_at: new Date().toISOString(),
+      _pending: true,
+    };
+
+    const inputSnapshot = chatInput;
+    setChatInput('');
+    setActiveView('all');
+    setTasks(prev => [tempTask, ...prev]);
+
+    try {
+      const result = await taskAPI.createTask(inputSnapshot);
+      if (result.success && result.task) {
+        // Replace the temp item with the real one from the server
+        setTasks(prev => prev.map(t => t.id === tempId ? result.task : t));
       } else {
-        const result = await taskAPI.createTask(chatInput);
-        if (result.success) {
-          await loadTasks();
-          setChatInput('');
-          setActiveView('all');
-        }
+        // No task object returned — just do a background refresh
+        setTasks(prev => prev.filter(t => t.id !== tempId));
+        loadTasks();
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error creating task:', error);
+      // Roll back the optimistic add
+      setTasks(prev => prev.filter(t => t.id !== tempId));
+      setChatInput(inputSnapshot);
       alert(`Error: ${error.response?.data?.detail || error.message}`);
     } finally {
       setIsSubmitting(false);
@@ -205,11 +242,16 @@ function App() {
   };
 
   const handleDeleteTask = async (taskId) => {
+    // Optimistic delete: remove from UI immediately
+    const previousTasks = tasks;
+    setTasks(prev => prev.filter(t => t.id !== taskId));
+
     try {
       await taskAPI.deleteTask(taskId);
-      await loadTasks();
     } catch (error) {
       console.error('Error deleting task:', error);
+      // Roll back on failure
+      setTasks(previousTasks);
     }
   };
 

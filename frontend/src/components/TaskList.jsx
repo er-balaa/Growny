@@ -78,7 +78,7 @@ const TaskList = ({ tasks, onDeleteTask, searchResults, isSearchMode }) => {
         return (
           <div
             key={task.id}
-            className={`task-item-minimal ${overdue ? 'overdue' : ''} ${dueSoon && !overdue ? 'due-soon' : ''}`}
+            className={`task-item-minimal ${overdue ? 'overdue' : ''} ${dueSoon && !overdue ? 'due-soon' : ''} ${task._pending ? 'task-pending' : ''}`}
             style={{ '--priority-color': priorityColor, '--category-color': categoryColor }}
           >
             {/* Priority indicator line */}

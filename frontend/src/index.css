@@ -2193,6 +2193,17 @@
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 100%);
 }
 
+/* Optimistic update: item is pending server confirmation */
+.task-item-minimal.task-pending {
+  opacity: 0.75;
+  animation: pendingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pendingPulse {
+  0%, 100% { opacity: 0.75; }
+  50%       { opacity: 1;    }
+}
+
 /* Priority indicator line */
 .task-priority-line {
   width: 3px;

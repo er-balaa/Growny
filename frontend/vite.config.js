@@ -16,11 +16,6 @@ export default defineConfig({
     },
   },
   server: {
-    headers: {
-      // Allow popups for Google Sign-In (use 'same-origin-allow-popups' instead of 'same-origin')
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
