@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { chatAPI } from '../services/api';
 
-// Badge config per action type
 const BADGE = {
-  FINANCE: { label: '💰 Logged',    cls: 'badge-finance'  },
-  TASK:    { label: '✅ Saved',      cls: 'badge-task'     },
-  ERROR:   { label: '⚠️ Error',      cls: 'badge-error'    },
+  FINANCE: { label: 'Logged',    cls: 'badge-finance'  },
+  TASK:    { label: 'Saved',      cls: 'badge-task'     },
+  ERROR:   { label: 'Error',      cls: 'badge-error'    },
   GENERAL: null,
 };
 
@@ -38,7 +37,6 @@ const ChatView = ({ onDataRefresh, user }) => {
 
   useEffect(() => { scrollToBottom(); }, [messages, isTyping]);
 
-  // Cycle through thinking step labels while agent is working
   useEffect(() => {
     if (isTyping) {
       setThinkingStep(0);

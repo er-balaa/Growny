@@ -119,7 +119,7 @@ const OverviewDashboard = ({ tasks = [], transactions = [], onDeleteTask }) => {
               <TaskList tasks={upcomingItems} onDeleteTask={onDeleteTask} hideHeader={true} />
             ) : (
               <div className="empty-state">
-                <p>You have no active tasks. Take a break! 🎉</p>
+                <p>You have no active tasks. Take a break!</p>
               </div>
             )}
           </div>

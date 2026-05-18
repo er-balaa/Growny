@@ -12,11 +12,15 @@ services:
       - key: NODE_VERSION
         value: "18"
       # Add your environment variables in Render Dashboard
-      - key: GEMINI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
+        sync: false
+      - key: GMAIL_SENDER
+        sync: false
+      - key: GMAIL_APP_PASSWORD
         sync: false
       - key: FIREBASE_ADMIN_SDK_PATH
         value: ./firebase-admin-sdk.json

@@ -72,6 +72,7 @@ function App() {
   const [chatInput, setChatInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!auth) {
@@ -399,14 +400,21 @@ function App() {
         <div className="orb orb-3"></div>
       </div>
 
+      {/* Mobile Sidebar Overlay */}
+      {isMobileSidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsMobileSidebarOpen(false)}></div>
+      )}
+
       <Sidebar
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={(view) => { setActiveView(view); setIsMobileSidebarOpen(false); }}
         taskCounts={getTaskCounts()}
         user={user}
         onSignOut={handleSignOut}
-        onNewChat={handleNewChat}
+        onNewChat={() => { handleNewChat(); setIsMobileSidebarOpen(false); }}
         Avatar={Avatar}
+        isMobileOpen={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         IconPlus={IconPlus}
         IconSearch={IconSearch}
         IconImportant={IconImportant}
@@ -418,6 +426,13 @@ function App() {
       <header className="mobile-header">
         <div className="mobile-header-content">
           <div className="mobile-logo-group">
+            <button className="mobile-menu-btn" onClick={() => setIsMobileSidebarOpen(true)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
             <span className="mobile-logo">Growny<span>AI</span></span>
           </div>
 

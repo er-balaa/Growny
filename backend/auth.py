@@ -92,13 +92,32 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
         uid = decoded_token.get('user_id') or decoded_token.get('sub')
         email = decoded_token.get('email', '')
         
-        return {
+        user_data = {
             'uid': uid,
             'email': email,
             'name': decoded_token.get('name', ''),
             'picture': decoded_token.get('picture', ''),
             'email_verified': decoded_token.get('email_verified', False),
         }
+
+        # Cache user email for background jobs
+        if uid and email:
+            import json, os
+            cache_file = "user_emails.json"
+            try:
+                if os.path.exists(cache_file):
+                    with open(cache_file, "r") as f:
+                        cache = json.load(f)
+                else:
+                    cache = {}
+                if cache.get(uid, {}).get("email") != email:
+                    cache[uid] = {"email": email, "name": user_data['name']}
+                    with open(cache_file, "w") as f:
+                        json.dump(cache, f)
+            except Exception:
+                pass
+        
+        return user_data
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
