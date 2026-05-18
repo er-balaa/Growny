@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import Auth from './components/Auth';
 import Sidebar from './components/Sidebar';
 import TaskList from './components/TaskList';
-import { taskAPI } from './services/api';
+import ChatView from './components/ChatView';
+import MoneyDashboard from './components/MoneyDashboard';
+import KnowledgeBase from './components/KnowledgeBase';
+import OverviewDashboard from './components/OverviewDashboard';
+import { taskAPI, moneyAPI } from './services/api';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { auth, getCurrentToken } from './firebase';
+import './App.css';
 
 // --- Professional Icons (SVG) ---
 const IconPlus = () => (
@@ -59,6 +64,7 @@ const IconTask = () => (
 function App() {
   const [user, setUser] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
@@ -96,8 +102,8 @@ function App() {
             localStorage.setItem('user', JSON.stringify(userData));
             localStorage.setItem('authToken', token);
 
-            // Load tasks after auth is confirmed
-            loadTasks(true);
+            // Load tasks and transactions after auth is confirmed
+            loadData(true);
           } else {
             console.warn('[App] No token available for authenticated user');
             setLoading(false);
@@ -130,23 +136,24 @@ function App() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showProfileDropdown]);
 
-  const loadTasks = async (eager = false) => {
+  const loadData = async (eager = false) => {
     try {
-      // Set loading state for eager loading
       if (eager) {
         setTasksLoading(true);
       }
 
-      console.log('Loading tasks...');
-      const tasksData = await taskAPI.getTasks();
-      console.log(`Loaded ${tasksData.length} tasks`);
+      console.log('Loading user data...');
+      const [tasksData, txData] = await Promise.all([
+        taskAPI.getTasks(),
+        moneyAPI.getTransactions()
+      ]);
+      
+      console.log(`Loaded ${tasksData.length} tasks and ${txData.length} transactions`);
       setTasks(tasksData);
+      setTransactions(txData);
     } catch (error) {
-      console.error('Error loading tasks:', error);
-      console.error('Error details:', error.response?.data || error.message);
-      // Don't clear existing tasks on error, just log it
+      console.error('Error loading data:', error);
     } finally {
-      // Always set loading to false when done
       setLoading(false);
       setTasksLoading(false);
     }
@@ -242,16 +249,24 @@ function App() {
   };
 
   const handleDeleteTask = async (taskId) => {
-    // Optimistic delete: remove from UI immediately
     const previousTasks = tasks;
     setTasks(prev => prev.filter(t => t.id !== taskId));
-
     try {
       await taskAPI.deleteTask(taskId);
     } catch (error) {
       console.error('Error deleting task:', error);
-      // Roll back on failure
       setTasks(previousTasks);
+    }
+  };
+
+  const handleDeleteTransaction = async (txId) => {
+    const previousTx = transactions;
+    setTransactions(prev => prev.filter(t => t.id !== txId));
+    try {
+      await moneyAPI.deleteTransaction(txId);
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      setTransactions(previousTx);
     }
   };
 
@@ -277,8 +292,8 @@ function App() {
           break;
         case 'all':
         default:
-          // Important view: Show high priority first, then by due date
-          filtered = tasks.filter(t => t.category !== 'NOTE');
+          // Overview view: Show everything (tasks, reminders, notes)
+          filtered = tasks;
           break;
       }
     }
@@ -450,39 +465,24 @@ function App() {
           </div>
         </div>
 
-        {!isListView ? (
-          <div className="chat-welcome">
-            <h1 className="welcome-title">What's on your mind today?</h1>
+        {activeView === 'chat' && (
+          <ChatView onDataRefresh={loadData} user={user} />
+        )}
+        
+        {activeView === 'money' && (
+          <MoneyDashboard transactions={transactions} onDeleteTransaction={handleDeleteTransaction} />
+        )}
+        
+        {activeView === 'knowledge' && (
+          <KnowledgeBase />
+        )}
 
-            <div className="chat-input-container">
-              <form onSubmit={handleChatSubmit}>
-                <div className="chat-input-wrapper">
-                  <span className="chat-input-icon"><IconPlus /></span>
-                  <input
-                    type="text"
-                    className="chat-input"
-                    placeholder="Ask anything"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    disabled={isSubmitting}
-                  />
-                  <button
-                    type="submit"
-                    className="chat-submit-btn"
-                    disabled={!chatInput.trim() || isSubmitting}
-                  >
-                    <IconArrowUp />
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        ) : (
+        {isListView && activeView !== 'money' && activeView !== 'knowledge' && (
           <div className="list-view">
             <div className="list-header">
               <h1 className="list-title">
                 {activeView === 'search' ? 'Search Results' :
-                  activeView === 'all' ? 'Important' :
+                  activeView === 'all' ? 'Overview' :
                     activeView.charAt(0).toUpperCase() + activeView.slice(1)}
               </h1>
               <p className="list-count">{filteredTasks.length} items</p>
@@ -513,56 +513,23 @@ function App() {
               </div>
             )}
 
-            <TaskList
-              tasks={filteredTasks}
-              searchResults={searchResults}
-              onDeleteTask={handleDeleteTask}
-              isSearchMode={activeView === 'search'}
-            />
+            {activeView === 'all' ? (
+              <OverviewDashboard 
+                  tasks={tasks} 
+                  transactions={transactions} 
+                  onDeleteTask={handleDeleteTask} 
+              />
+            ) : (
+              <TaskList
+                tasks={filteredTasks}
+                searchResults={searchResults}
+                onDeleteTask={handleDeleteTask}
+                isSearchMode={activeView === 'search'}
+              />
+            )}
           </div>
         )}
       </main>
-
-      <nav className="mobile-nav">
-        <div className="mobile-nav-items">
-          <button className={`mobile-nav-item ${activeView === 'chat' ? 'active' : ''}`} onClick={handleNewChat} title="Chat">
-            <IconPlus />
-          </button>
-          <button className={`mobile-nav-item ${activeView === 'search' ? 'active' : ''}`} onClick={() => setActiveView('search')} title="Search">
-            <IconSearch />
-          </button>
-          <button className={`mobile-nav-item ${activeView === 'all' ? 'active' : ''}`} onClick={() => setActiveView('all')} title="All">
-            <IconImportant />
-          </button>
-          <button className={`mobile-nav-item ${activeView === 'reminders' ? 'active' : ''}`} onClick={() => setActiveView('reminders')} title="Reminders">
-            <IconBell />
-          </button>
-          <button className={`mobile-nav-item ${activeView === 'notes' ? 'active' : ''}`} onClick={() => setActiveView('notes')} title="Notes">
-            <IconNote />
-          </button>
-          <button className={`mobile-nav-item ${activeView === 'tasks' ? 'active' : ''}`} onClick={() => setActiveView('tasks')} title="Tasks">
-            <IconTask />
-          </button>
-        </div>
-      </nav>
-
-      {activeView === 'chat' && (
-        <div className="mobile-input-bar">
-          <form onSubmit={handleChatSubmit}>
-            <div className="mobile-input-row">
-              <input
-                type="text"
-                placeholder="Ask anything..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-              />
-              <button type="submit" className="mobile-submit" disabled={!chatInput.trim() || isSubmitting}>
-                <IconArrowUp />
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
     </div>
   );
 }

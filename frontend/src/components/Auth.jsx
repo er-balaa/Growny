@@ -18,6 +18,7 @@ const Auth = ({ user, onAuthStateChange }) => {
 
     try {
       console.log('Starting Google sign-in with popup...');
+      const { signInWithPopup } = await import('firebase/auth');
       const result = await signInWithPopup(auth, googleProvider);
 
       if (result && result.user) {
@@ -58,6 +59,7 @@ const Auth = ({ user, onAuthStateChange }) => {
 
     setLoading(true);
     try {
+      const { signOut } = await import('firebase/auth');
       await signOut(auth);
       onAuthStateChange(null);
     } catch (error) {

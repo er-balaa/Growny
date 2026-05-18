@@ -109,27 +109,61 @@ api.interceptors.response.use(
 );
 
 export const taskAPI = {
-  // Create a new task
   createTask: async (text) => {
     const response = await api.post('/api/tasks', { text });
     return response.data;
   },
-
-  // Get all tasks for the user
   getTasks: async () => {
     const response = await api.get('/api/tasks');
     return response.data;
   },
-
-  // Search tasks
   searchTasks: async (query) => {
     const response = await api.post('/api/search', { query });
     return response.data;
   },
-
-  // Delete a task
   deleteTask: async (taskId) => {
     const response = await api.delete(`/api/tasks/${taskId}`);
+    return response.data;
+  },
+};
+
+export const chatAPI = {
+  sendMessage: async (text, history = []) => {
+    const response = await api.post('/api/chat', { text, history });
+    return response.data;
+  }
+};
+
+export const moneyAPI = {
+  getTransactions: async () => {
+    const response = await api.get('/api/transactions');
+    return response.data;
+  },
+  deleteTransaction: async (txId) => {
+    const response = await api.delete(`/api/transactions/${txId}`);
+    return response.data;
+  }
+};
+
+export const emailAPI = {
+  sendDailyDigest: async (toEmail, userName) => {
+    const response = await api.post('/api/email/daily-digest', {
+      to_email: toEmail,
+      user_name: userName,
+    });
+    return response.data;
+  },
+  checkAndNotify: async (toEmail, userName) => {
+    const response = await api.get('/api/email/check-and-notify', {
+      params: { to_email: toEmail, user_name: userName },
+    });
+    return response.data;
+  },
+  sendTestEmail: async (toEmail, userName) => {
+    const response = await api.post('/api/email/test', {
+      to_email: toEmail,
+      user_name: userName,
+    });
     return response.data;
   },
 };
