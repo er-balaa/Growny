@@ -1,0 +1,16 @@
+name: Keep Render App Awake
+
+on:
+  schedule:
+    # Runs every 14 minutes to prevent Render free tier from sleeping (sleeps after 15 mins)
+    - cron: "*/14 * * * *"
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render App
+        run: |
+          echo "Pinging https://growny.onrender.com/api/health"
+          curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" -s -o /dev/null -w "Response code: %{http_code}\n" https://growny.onrender.com/api/health
