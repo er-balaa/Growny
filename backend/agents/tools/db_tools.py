@@ -94,7 +94,7 @@ def get_tasks_due_today(user_id: str) -> list:
 def get_wealth_summary(user_id: str) -> dict:
     """Compute total income, total expense, and net balance from ALL transactions."""
     if not supabase:
-        return {"total_income": 0, "total_expense": 0, "net_balance": 0, "currency": "INR", "recent_transactions": []}
+        return {"total_income": 0, "total_expense": 0, "net_balance": 0, "today_expense": 0, "currency": "INR", "recent_transactions": []}
     try:
         result = (
             supabase.table("transactions")
@@ -104,8 +104,12 @@ def get_wealth_summary(user_id: str) -> dict:
             .execute()
         )
         txns = result.data or []
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        
         total_income = sum(t["amount"] for t in txns if t.get("type") == "INCOME")
         total_expense = sum(t["amount"] for t in txns if t.get("type") == "EXPENSE")
+        today_expense = sum(t["amount"] for t in txns if t.get("type") == "EXPENSE" and t.get("date") == today_str)
+        
         net_balance = total_income - total_expense
         category_breakdown = {}
         for t in txns:
@@ -114,6 +118,7 @@ def get_wealth_summary(user_id: str) -> dict:
         return {
             "total_income": round(total_income, 2),
             "total_expense": round(total_expense, 2),
+            "today_expense": round(today_expense, 2),
             "net_balance": round(net_balance, 2),
             "currency": txns[0].get("currency", "INR") if txns else "INR",
             "transaction_count": len(txns),
@@ -122,7 +127,7 @@ def get_wealth_summary(user_id: str) -> dict:
         }
     except Exception as e:
         print(f"[DB] get_wealth_summary error: {e}")
-        return {"total_income": 0, "total_expense": 0, "net_balance": 0, "currency": "INR", "recent_transactions": []}
+        return {"total_income": 0, "total_expense": 0, "net_balance": 0, "today_expense": 0, "currency": "INR", "recent_transactions": []}
 
 
 def get_all_tasks(user_id: str, limit: int = 50) -> list:
@@ -141,4 +146,22 @@ def get_all_tasks(user_id: str, limit: int = 50) -> list:
         return result.data or []
     except Exception as e:
         print(f"[DB] get_all_tasks error: {e}")
+        return []
+
+def get_tasks_entered_today(user_id: str) -> list:
+    """Fetch tasks created today."""
+    if not supabase:
+        return []
+    try:
+        today_start = datetime.now().strftime('%Y-%m-%dT00:00:00')
+        result = (
+            supabase.table("tasks")
+            .select("*")
+            .eq("user_id", user_id)
+            .gte("created_at", today_start)
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        print(f"[DB] get_tasks_entered_today error: {e}")
         return []

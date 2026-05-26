@@ -8,6 +8,15 @@ const BADGE = {
   GENERAL: null,
 };
 
+// Web Speech API Initialization
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const mic = SpeechRecognition ? new SpeechRecognition() : null;
+if (mic) {
+  mic.continuous = true;
+  mic.interimResults = true;
+  mic.lang = 'en-US';
+}
+
 const ChatView = ({ onDataRefresh, user }) => {
   const [messages, setMessages] = useState([
     {
@@ -20,6 +29,7 @@ const ChatView = ({ onDataRefresh, user }) => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [thinkingStep, setThinkingStep] = useState(0);
   const messagesEndRef = useRef(null);
   const thinkingRef = useRef(null);
@@ -49,9 +59,52 @@ const ChatView = ({ onDataRefresh, user }) => {
     return () => clearInterval(thinkingRef.current);
   }, [isTyping]);
 
+  // Voice Recognition Setup
+  useEffect(() => {
+    if (!mic) return;
+    
+    mic.onstart = () => setIsListening(true);
+    
+    mic.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      setInput(transcript);
+    };
+
+    mic.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      setIsListening(false);
+    };
+
+    mic.onend = () => setIsListening(false);
+    
+    return () => {
+      if (isListening) mic.stop();
+    };
+  }, []);
+
+  const toggleVoice = () => {
+    if (!mic) {
+      alert("Voice recognition is not supported in this browser. Try Chrome or Safari.");
+      return;
+    }
+    if (isListening) {
+      mic.stop();
+    } else {
+      setInput(''); // Clear input before dictating
+      mic.start();
+    }
+  };
+
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
+    
+    if (isListening && mic) {
+      mic.stop();
+    }
 
     const userMsg = {
       id: Date.now().toString(),
@@ -150,12 +203,25 @@ const ChatView = ({ onDataRefresh, user }) => {
       </div>
 
       <div className="chat-input-container-unified">
-        <form onSubmit={handleSend} className="chat-form">
+        <form onSubmit={handleSend} className={`chat-form ${isListening ? 'listening-mode' : ''}`}>
+          <button 
+            type="button" 
+            onClick={toggleVoice} 
+            className={`voice-btn ${isListening ? 'listening' : ''}`}
+            title="Use Voice Typing"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill={isListening ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="22" />
+            </svg>
+          </button>
+          
           <input
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            placeholder="Log an expense, add a task, or ask a question…"
+            placeholder={isListening ? "Listening... Speak now" : "Log an expense, add a task, or ask a question…"}
             disabled={isTyping}
             className="unified-chat-input"
           />

@@ -103,6 +103,16 @@ def _base_template(title: str, preview: str, content_html: str) -> str:
               <p style="margin:8px 0 0;color:#4d4d4d;font-size:12px;">
                 You're receiving this because you're a Growny user.
               </p>
+              <div style="margin-top:16px;padding-top:16px;border-top:1px solid #262626;text-align:left;">
+                <p style="margin:0;color:#666666;font-size:11px;line-height:1.5;">
+                  <strong>Policy Conditions:</strong> This email is generated automatically based on your active Growny profile. 
+                  We respect your privacy. All financial and task data is securely processed to provide you with insights. 
+                  Do not reply to this email. For support, please contact your administrator.
+                </p>
+              </div>
+              <p style="margin:16px 0 0;color:#808080;font-size:14px;font-style:italic;">
+                Best regards,<br/>The Growny Team
+              </p>
             </td>
           </tr>
 
@@ -138,44 +148,25 @@ def _alert_badge(level: str) -> str:
 def send_daily_digest(to_email: str, user_name: str, wealth: dict, tasks: list, ai_insight: str) -> dict:
     """Send the daily overview digest email."""
     currency = wealth.get("currency", "INR")
-    income = wealth.get("total_income", 0)
-    expense = wealth.get("total_expense", 0)
+    today_expense = wealth.get("today_expense", 0)
     balance = wealth.get("net_balance", 0)
     balance_color = "#10b981" if balance >= 0 else "#ef4444"
     balance_sign = "+" if balance >= 0 else ""
 
-    # Finance cards
+    # Finance cards focusing on Today's Expense and Net Balance
     cards_html = f"""
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
       <tr>
-        {_card("Total Income", f"{currency} {income:,.0f}", "#10b981")}
-        {_card("Total Expense", f"{currency} {expense:,.0f}", "#ef4444")}
+        {_card("Today's Expense", f"{currency} {today_expense:,.0f}", "#ef4444")}
         {_card("Net Balance", f"{balance_sign}{currency} {abs(balance):,.0f}", balance_color)}
+        {_card("Tasks Added", f"{len(tasks)}", "#f59e0b")}
       </tr>
     </table>"""
-
-    # Category breakdown
-    breakdown = wealth.get("category_breakdown", {})
-    breakdown_html = ""
-    if breakdown:
-        breakdown_html = '<p style="color:#808080;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;">Spending by Category</p>'
-        for cat, amt in sorted(breakdown.items(), key=lambda x: -x[1])[:6]:
-            pct = (amt / expense * 100) if expense > 0 else 0
-            breakdown_html += f"""
-            <div style="margin-bottom:10px;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-                <span style="color:#cccccc;font-size:13px;font-weight:500;">{cat}</span>
-                <span style="color:#b3b3b3;font-size:13px;font-weight:500;">{currency} {amt:,.0f} ({pct:.0f}%)</span>
-              </div>
-              <div style="background:#262626;border-radius:4px;height:6px;">
-                <div style="background:linear-gradient(90deg,#ff6b2c,#ff8f5c);border-radius:4px;height:6px;width:{min(pct,100):.0f}%;"></div>
-              </div>
-            </div>"""
 
     # Tasks section
     tasks_html = ""
     if tasks:
-        tasks_html = f'<p style="color:#808080;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;">Tasks Due Today ({len(tasks)})</p>'
+        tasks_html = f'<p style="color:#808080;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:20px 0 10px;">Tasks Entered Today ({len(tasks)})</p>'
         for t in tasks[:6]:
             tasks_html += f"""
             <div style="background:#202020;border-radius:10px;padding:12px 16px;margin-bottom:8px;
@@ -185,7 +176,7 @@ def send_daily_digest(to_email: str, user_name: str, wealth: dict, tasks: list, 
             </div>"""
     else:
         tasks_html = """<div style="background:#202020;border-radius:10px;padding:16px;text-align:center;margin-top:16px;border:1px dashed #333;">
-            <p style="color:#808080;margin:0;font-size:14px;">No tasks due today. Great day to get ahead!</p>
+            <p style="color:#808080;margin:0;font-size:14px;">No new tasks added today.</p>
           </div>"""
 
     # AI insight
@@ -200,19 +191,18 @@ def send_daily_digest(to_email: str, user_name: str, wealth: dict, tasks: list, 
 
     content = f"""
     <p style="margin:0 0 20px;color:#cccccc;font-size:15px;line-height:1.6;">
-      Hey <strong style="color:#ffffff;">{user_name}</strong>! Here's your financial and task overview for today.
+      Hey <strong style="color:#ffffff;">{user_name}</strong>! Here's your daily roundup at 8 PM.
     </p>
     {cards_html}
-    {breakdown_html}
     {tasks_html}
     {insight_html}"""
 
     html = _base_template(
-        title="Your Daily Overview",
-        preview=f"Balance: {currency} {balance:,.0f} · {len(tasks)} tasks due today",
+        title="Your Daily Roundup",
+        preview=f"Spent Today: {currency} {today_expense:,.0f} · {len(tasks)} tasks added",
         content_html=content
     )
-    return _send_email(to_email, f"Growny Daily Digest — {datetime.now().strftime('%b %d, %Y')}", html)
+    return _send_email(to_email, f"Growny Daily Roundup — {datetime.now().strftime('%b %d, %Y')}", html)
 
 
 def send_important_alert(to_email: str, user_name: str, alert_type: str, details: dict) -> dict:

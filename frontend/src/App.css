@@ -240,6 +240,42 @@
   transform: none;
 }
 
+/* Voice Button */
+.voice-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  margin-right: 4px;
+}
+
+.voice-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.voice-btn.listening {
+  color: #ef4444;
+  animation: pulse-mic 1.5s infinite;
+}
+
+.chat-form.listening-mode {
+  border-color: rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+@keyframes pulse-mic {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0.4)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.8)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0)); }
+}
+
 /* Typing Indicator */
 .typing-indicator {
   display: flex;
@@ -343,43 +379,71 @@
 .transactions-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .transaction-item {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 20px;
-  background: var(--bg-secondary);
-  border-radius: 16px;
-  border: 1px solid var(--glass-border);
-  transition: all 0.2s ease;
+  padding: 18px 24px;
+  background: linear-gradient(145deg, rgba(35, 35, 35, 0.9), rgba(20, 20, 20, 0.8));
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.transaction-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.transaction-item.income::before {
+  background: #10b981;
+}
+
+.transaction-item.expense::before {
+  background: #ef4444;
 }
 
 .transaction-item:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
   border-color: rgba(255, 255, 255, 0.15);
-  transform: translateX(4px);
 }
 
 .tx-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .transaction-item.income .tx-icon {
-  background: rgba(16, 185, 129, 0.15);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.05));
   color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .transaction-item.expense .tx-icon {
-  background: rgba(239, 68, 68, 0.15);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(239, 68, 68, 0.05));
   color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .tx-details {
@@ -391,23 +455,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .tx-desc {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.3px;
 }
 
 .tx-amount {
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 800;
+  font-size: 18px;
   flex-shrink: 0;
   margin-left: 12px;
+  letter-spacing: 0.5px;
 }
 
 .tx-amount.income { color: #10b981; }
@@ -422,10 +488,13 @@
 }
 
 .tx-category {
-  background: var(--bg-tertiary);
-  padding: 2px 10px;
-  border-radius: 6px;
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  color: #d1d5db;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 
