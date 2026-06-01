@@ -34,16 +34,35 @@ app.include_router(email.router, prefix="/api", tags=["Email"])
 
 @app.get("/api/health")
 async def health_check():
+    gmail_sender = os.getenv("GMAIL_SENDER", "")
+    gmail_pass = os.getenv("GMAIL_APP_PASSWORD", "")
     return {
         "message": "My Wise Backend API",
         "version": "2.0.0",
         "status": {
             "supabase": "connected" if supabase else "not configured",
             "groq": "connected" if groq_client else "not configured",
+            "gmail": "configured" if (gmail_sender and gmail_pass) else "not configured",
             "auth": "jwt_verification",
             "agent_mode": "fallback_llm"
         }
     }
+
+
+@app.get("/api/cron/check-emails")
+async def cron_check_emails():
+    """
+    Endpoint for Render cron jobs to trigger email checks.
+    This is more reliable than asyncio background tasks on free tier.
+    Call this via: GET https://your-app.onrender.com/api/cron/check-emails
+    """
+    from services.automation_service import poll_tasks_and_send_emails_once
+    try:
+        result = await poll_tasks_and_send_emails_once()
+        return {"status": "ok", "result": result}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
 
 @app.get("/{full_path:path}")
 async def catch_all(full_path: str):

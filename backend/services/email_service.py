@@ -21,13 +21,19 @@ from datetime import datetime
 _env_path = pathlib.Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=_env_path, override=False)
 
-GMAIL_SENDER = os.getenv("GMAIL_SENDER", "")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+
+def _get_gmail_creds():
+    """Lazily read Gmail credentials so Render env vars are always picked up."""
+    sender = os.getenv("GMAIL_SENDER", "")
+    password = os.getenv("GMAIL_APP_PASSWORD", "")
+    return sender, password
 
 
 def _send_email(to_email: str, subject: str, html_body: str) -> dict:
     """Core function to send an HTML email via Gmail SMTP."""
+    GMAIL_SENDER, GMAIL_APP_PASSWORD = _get_gmail_creds()
     if not GMAIL_SENDER or not GMAIL_APP_PASSWORD:
+        print(f"[Email] FAILED — credentials missing. GMAIL_SENDER={bool(GMAIL_SENDER)}, GMAIL_APP_PASSWORD={bool(GMAIL_APP_PASSWORD)}")
         return {"success": False, "error": "Gmail credentials not configured."}
     try:
         msg = MIMEMultipart("alternative")

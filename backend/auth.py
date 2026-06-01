@@ -102,8 +102,8 @@ async def verify_firebase_token(credentials: HTTPAuthorizationCredentials = Depe
 
         # Cache user email for background jobs
         if uid and email:
-            import json, os
-            cache_file = "user_emails.json"
+            import json, os, pathlib
+            cache_file = str(pathlib.Path(__file__).parent / "user_emails.json")
             try:
                 if os.path.exists(cache_file):
                     with open(cache_file, "r") as f:

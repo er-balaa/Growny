@@ -12,7 +12,7 @@ const BADGE = {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const mic = SpeechRecognition ? new SpeechRecognition() : null;
 if (mic) {
-  mic.continuous = true;
+  mic.continuous = false;
   mic.interimResults = true;
   mic.lang = 'en-US';
 }
@@ -204,6 +204,14 @@ const ChatView = ({ onDataRefresh, user }) => {
 
       <div className="chat-input-container-unified">
         <form onSubmit={handleSend} className={`chat-form ${isListening ? 'listening-mode' : ''}`}>
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder={isListening ? "Listening... Speak now" : "Log an expense, add a task, or ask a question…"}
+            disabled={isTyping}
+            className="unified-chat-input"
+          />
           <button 
             type="button" 
             onClick={toggleVoice} 
@@ -216,15 +224,6 @@ const ChatView = ({ onDataRefresh, user }) => {
               <line x1="12" x2="12" y1="19" y2="22" />
             </svg>
           </button>
-          
-          <input
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            placeholder={isListening ? "Listening... Speak now" : "Log an expense, add a task, or ask a question…"}
-            disabled={isTyping}
-            className="unified-chat-input"
-          />
           <button type="submit" disabled={!input.trim() || isTyping} className="unified-submit-btn">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -2167,32 +2167,43 @@
 .task-list-minimal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 
 .task-item-minimal {
   display: flex;
   align-items: stretch;
-  background: var(--bg-secondary);
-  border: 1px solid var(--bg-tertiary);
-  border-radius: 12px;
+  background: rgba(30, 30, 30, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
   overflow: hidden;
-  transition: all 0.2s ease;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.2), 
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .task-item-minimal:hover {
-  border-color: rgba(255, 255, 255, 0.08);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: rgba(45, 45, 45, 0.75);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 8px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .task-item-minimal.overdue {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.05) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1) 0%, rgba(30, 30, 30, 0.65) 100%);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .task-item-minimal.due-soon {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.05) 0%, var(--bg-secondary) 100%);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, rgba(30, 30, 30, 0.65) 100%);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 /* Optimistic update: item is pending server confirmation */
@@ -2202,23 +2213,25 @@
 }
 
 @keyframes pendingPulse {
-  0%, 100% { opacity: 0.75; }
-  50%       { opacity: 1;    }
+  0%, 100% { opacity: 0.75; transform: scale(0.99); }
+  50%       { opacity: 1; transform: scale(1); }
 }
 
 /* Priority indicator line */
 .task-priority-line {
-  width: 3px;
+  width: 5px;
   min-height: 100%;
   flex-shrink: 0;
+  box-shadow: 1px 0 10px var(--priority-color, transparent);
+  opacity: 0.95;
 }
 
 .task-main {
   flex: 1;
-  padding: 14px 16px;
+  padding: 18px 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -2227,10 +2240,11 @@
 }
 
 .task-text-minimal {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
   line-height: 1.5;
-  color: var(--text-primary);
+  color: #ffffff;
   margin: 0;
   word-wrap: break-word;
   overflow-wrap: break-word;
@@ -2240,80 +2254,86 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .task-badges {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .task-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 3px 8px;
-  border-radius: 4px;
+  letter-spacing: 0.6px;
+  padding: 4px 12px;
+  border-radius: 14px;
   border: 1px solid;
   white-space: nowrap;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .task-badge.category {
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .task-badge.date {
-  background: var(--bg-tertiary);
-  color: var(--text-secondary);
-  border-color: transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e5e5e5;
+  border-color: rgba(255, 255, 255, 0.1);
   text-transform: none;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .task-badge.date.overdue {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .task-badge.date.due-soon {
-  background: rgba(245, 158, 11, 0.1);
-  color: #f59e0b;
-  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .task-badge.match {
-  background: var(--accent-light);
-  color: var(--accent);
-  border-color: rgba(249, 115, 22, 0.2);
+  background: rgba(255, 107, 44, 0.15);
+  color: #ff8f5c;
+  border-color: rgba(255, 107, 44, 0.3);
 }
 
 .task-delete-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: transparent;
-  color: var(--text-muted);
-  border: none;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #a3a3a3;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  opacity: 0.5;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  opacity: 0.6;
   flex-shrink: 0;
 }
 
 .task-delete-btn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.15);
   color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
   opacity: 1;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 /* Mobile adjustments for minimal task list */

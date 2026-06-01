@@ -25,3 +25,12 @@ services:
       - key: FIREBASE_ADMIN_SDK_PATH
         value: ./firebase-admin-sdk.json
     healthCheckPath: /api/health
+
+  # Cron Job to trigger email checks (runs every 5 minutes)
+  # On free tier, this also keeps the service alive
+  - type: cron
+    name: growny-email-checker
+    runtime: python
+    schedule: "*/5 * * * *"
+    buildCommand: pip install requests
+    startCommand: python -c "import requests; r = requests.get('https://growny-ai.onrender.com/api/cron/check-emails'); print(r.json())"
