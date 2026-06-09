@@ -80,9 +80,9 @@ async def catch_all(full_path: str):
 
 @app.on_event("startup")
 async def startup_event():
-    import asyncio
-    from services.automation_service import poll_tasks_and_send_emails
-    asyncio.create_task(poll_tasks_and_send_emails())
+    # We rely on the Render cron job to hit /api/cron/check-emails 
+    # instead of a background infinite loop to save CPU during cold starts.
+    pass
 
 if __name__ == "__main__":
     import uvicorn

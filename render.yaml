@@ -31,6 +31,6 @@ services:
   - type: cron
     name: growny-email-checker
     runtime: python
-    schedule: "*/5 * * * *"
+    schedule: "*/15 * * * *"
     buildCommand: pip install requests
     startCommand: python -c "import requests; r = requests.get('https://growny-ai.onrender.com/api/cron/check-emails'); print(r.json())"
